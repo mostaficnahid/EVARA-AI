@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/api/auth/login",           "destination": "/api/auth/login" },
+    { "source": "/api/auth/register",        "destination": "/api/auth/register" },
+    { "source": "/api/auth/me",              "destination": "/api/auth/me" },
+    { "source": "/api/events/stats",         "destination": "/api/events/stats" },
+    { "source": "/api/events/:id/agenda",    "destination": "/api/events/agenda?id=:id" },
+    { "source": "/api/events/:id",           "destination": "/api/events/[id]?id=:id" },
+    { "source": "/api/events",               "destination": "/api/events/index" },
+    { "source": "/api/guests/bulk",          "destination": "/api/guests/bulk" },
+    { "source": "/api/guests/:id",           "destination": "/api/guests/[id]?id=:id" },
+    { "source": "/api/guests",               "destination": "/api/guests/index" },
+    { "source": "/api/ai/chat",              "destination": "/api/ai/chat" },
+    { "source": "/api/ai/generate-event",    "destination": "/api/ai/generate-event" },
+    { "source": "/api/ai/generate-agenda",   "destination": "/api/ai/generate-agenda" },
+    { "source": "/api/ai/suggest-venues",    "destination": "/api/ai/suggest-venues" },
+    { "source": "/api/ai/analyze",           "destination": "/api/ai/analyze" },
+    { "source": "/api/health",               "destination": "/api/health" },
+    { "source": "/((?!api/).*)",             "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/**/*.js": { "maxDuration": 30 }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin",      "value": "*" },
+        { "key": "Access-Control-Allow-Methods",     "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers",     "value": "Authorization, Content-Type" }
+      ]
+    }
+  ]
+}

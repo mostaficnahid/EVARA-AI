@@ -1,185 +1,218 @@
-# ✦ Evara AI — Events Organizer
+# ✦ Evara AI — Events Organizer (Vercel Edition)
 
-A full-stack AI-powered event management application built with React, Node.js/Express, MongoDB, and the Anthropic Claude API.
+A full-stack AI-powered event management platform.  
+**React 18 + TypeScript + Vite** frontend · **Vercel Serverless Functions** backend · **MongoDB Atlas** database · **Claude AI** assistant.
 
 ---
 
-## 🚀 Tech Stack
+## 🚀 One-Click Deploy
 
-| Layer       | Technologies                                              |
-|-------------|-----------------------------------------------------------|
-| **Frontend**  | React 18, TypeScript, Vite, React Router v6, Zustand      |
-| **UI/Charts** | Recharts, Google Fonts, Custom CSS Design System          |
-| **Backend**   | Node.js, Express 4, MongoDB, Mongoose                     |
-| **Auth**      | JWT (jsonwebtoken + bcryptjs)                             |
-| **AI**        | Anthropic Claude (claude-sonnet-4) via SDK               |
-| **Security**  | Helmet, CORS, express-rate-limit                          |
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+Or follow the step-by-step guide below.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-evara-ai/
-├── client/                  # React frontend (Vite + TypeScript)
+evara-ai-vercel/
+├── api/                        ← Vercel Serverless Functions (Node.js ESM)
+│   ├── _lib/
+│   │   ├── db.js               ← Cached Mongoose connection
+│   │   ├── models.js           ← User, Event, Guest schemas
+│   │   ├── auth.js             ← JWT verify helper + signToken
+│   │   └── cors.js             ← CORS headers + preflight handler
+│   ├── health.js               ← GET  /api/health
+│   ├── auth/
+│   │   ├── register.js         ← POST /api/auth/register
+│   │   ├── login.js            ← POST /api/auth/login
+│   │   └── me.js               ← GET  /api/auth/me
+│   ├── events/
+│   │   ├── index.js            ← GET/POST  /api/events
+│   │   ├── stats.js            ← GET       /api/events/stats
+│   │   ├── [id].js             ← GET/PUT/DELETE /api/events/:id
+│   │   └── agenda.js           ← POST      /api/events/:id/agenda
+│   ├── guests/
+│   │   ├── index.js            ← GET/POST  /api/guests
+│   │   ├── [id].js             ← PUT/DELETE /api/guests/:id
+│   │   └── bulk.js             ← POST      /api/guests/bulk
+│   └── ai/
+│       ├── chat.js             ← POST /api/ai/chat
+│       ├── generate-event.js   ← POST /api/ai/generate-event
+│       ├── generate-agenda.js  ← POST /api/ai/generate-agenda
+│       ├── suggest-venues.js   ← POST /api/ai/suggest-venues
+│       └── analyze.js          ← POST /api/ai/analyze
+│
+├── client/                     ← React 18 + TypeScript + Vite
 │   ├── src/
-│   │   ├── api/             # Axios API client + endpoint wrappers
-│   │   ├── components/      # Layout, AIPanel, shared components
-│   │   ├── pages/           # Dashboard, Events, EventDetail, Guests, Calendar, Analytics
-│   │   ├── store/           # Zustand global state (auth, events, guests, AI)
-│   │   ├── App.tsx          # Router with public/private routes
-│   │   └── index.css        # Design system CSS variables
-│   ├── index.html
-│   └── vite.config.ts       # Proxy /api → localhost:5000
+│   │   ├── api/index.ts        ← Axios client (relative /api/* paths)
+│   │   ├── store/index.ts      ← Zustand: auth, events, guests, AI chat
+│   │   ├── components/
+│   │   │   ├── Layout.tsx      ← Sidebar + topbar shell
+│   │   │   └── AIPanel.tsx     ← Persistent Claude chat panel
+│   │   └── pages/
+│   │       ├── Dashboard.tsx   ← Stats cards + upcoming events
+│   │       ├── Events.tsx      ← List + create (with AI generation)
+│   │       ├── EventDetail.tsx ← Detail view + AI agenda builder
+│   │       ├── Guests.tsx      ← Guest directory + RSVP management
+│   │       ├── Calendar.tsx    ← Month grid calendar
+│   │       ├── Analytics.tsx   ← Recharts: pie, bar, progress charts
+│   │       ├── Login.tsx
+│   │       └── Register.tsx
+│   └── vite.config.ts
 │
-├── server/                  # Express backend
-│   ├── config/db.js         # MongoDB connection
-│   ├── middleware/auth.js   # JWT protection middleware
-│   ├── models/              # Mongoose schemas (User, Event, Guest)
-│   ├── routes/
-│   │   ├── auth.js          # Register / Login / Me
-│   │   ├── events.js        # Full CRUD + agenda
-│   │   ├── guests.js        # Guest CRUD + bulk import
-│   │   └── ai.js            # AI chat, generate event, agenda, venues, analysis
-│   └── index.js             # Express app entry point
-│
-└── package.json             # Root monorepo scripts
+├── vercel.json                 ← Build config + URL rewrites
+├── package.json                ← Root deps for serverless functions
+└── .env.example                ← Environment variable template
 ```
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Deploy to Vercel
 
-### Prerequisites
-- Node.js v18+
-- MongoDB (local or MongoDB Atlas)
-- Anthropic API key
+### Step 1 — MongoDB Atlas (free tier)
 
-### 1. Clone & Install
+1. Go to [cloud.mongodb.com](https://cloud.mongodb.com) → **Create a free cluster**
+2. Create a database user (username + password)
+3. Add `0.0.0.0/0` to the IP Allow List (or restrict to Vercel's IPs)
+4. Click **Connect → Drivers** and copy the connection string:
+   ```
+   mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/evara-ai?retryWrites=true&w=majority
+   ```
 
-```bash
-git clone <your-repo-url> evara-ai
-cd evara-ai
-npm run install:all
-```
+### Step 2 — Anthropic API Key
 
-### 2. Configure Environment Variables
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. Create an API key — copy it
 
-**Server** — copy and fill in `server/.env`:
-```bash
-cp server/.env.example server/.env
-```
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/evara-ai
-JWT_SECRET=your-super-secret-key
-JWT_EXPIRES_IN=7d
-ANTHROPIC_API_KEY=sk-ant-...
-CLIENT_URL=http://localhost:5173
-```
-
-**Client** — copy and fill in `client/.env`:
-```bash
-cp client/.env.example client/.env
-```
-
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_ANTHROPIC_API_KEY=sk-ant-...
-```
-
-### 3. Run Development Servers
+### Step 3 — Deploy via Vercel CLI
 
 ```bash
-npm run dev
+npm i -g vercel          # install Vercel CLI once
+
+cd evara-ai-vercel
+vercel                   # follow the prompts (link to your account)
 ```
 
-This starts:
-- **Frontend** → http://localhost:5173
-- **Backend**  → http://localhost:5000
+When prompted, set these **environment variables** (or add them in the Vercel dashboard):
+
+| Variable            | Value                                      |
+|---------------------|--------------------------------------------|
+| `MONGODB_URI`       | Your Atlas connection string               |
+| `JWT_SECRET`        | A long random string (32+ chars)           |
+| `JWT_EXPIRES_IN`    | `7d`                                       |
+| `ANTHROPIC_API_KEY` | `sk-ant-api03-...`                         |
+
+### Step 4 — Deploy to production
+
+```bash
+vercel --prod
+```
+
+Your app is now live at `https://your-project.vercel.app` 🎉
+
+---
+
+## 💻 Local Development
+
+### Option A — Vercel CLI (recommended, matches production exactly)
+
+```bash
+npm i -g vercel
+
+# Create a .env.local at the project root with your secrets:
+cp .env.example .env.local
+# Fill in MONGODB_URI, JWT_SECRET, ANTHROPIC_API_KEY
+
+cd client && npm install && cd ..
+npm install
+
+vercel dev               # runs frontend + serverless functions together on http://localhost:3000
+```
+
+### Option B — Separate servers (frontend only, no serverless)
+
+```bash
+# 1. Start the client
+cd client
+npm install
+npm run dev              # http://localhost:5173
+
+# 2. To call real APIs you still need `vercel dev` or a deployed backend.
+#    Uncomment the proxy in client/vite.config.ts and point it at your backend.
+```
+
+---
+
+## 🔑 Environment Variables Reference
+
+All variables go in **Vercel Dashboard → Project → Settings → Environment Variables**.  
+For local dev, put them in a `.env.local` file at the project root.
+
+| Variable            | Required | Description                              |
+|---------------------|----------|------------------------------------------|
+| `MONGODB_URI`       | ✅        | MongoDB Atlas connection string           |
+| `JWT_SECRET`        | ✅        | Secret key for signing JWTs              |
+| `JWT_EXPIRES_IN`    | —        | Token lifetime, default `7d`             |
+| `ANTHROPIC_API_KEY` | ✅        | Claude API key for all AI features       |
 
 ---
 
 ## 🛠️ API Reference
 
+All endpoints require `Authorization: Bearer <token>` except `/auth/register` and `/auth/login`.
+
 ### Auth
-| Method | Endpoint              | Description         |
-|--------|-----------------------|---------------------|
-| POST   | `/api/auth/register`  | Create account      |
-| POST   | `/api/auth/login`     | Login + get JWT     |
-| GET    | `/api/auth/me`        | Get current user    |
+| Method | Path                  | Body                                  |
+|--------|-----------------------|---------------------------------------|
+| POST   | `/api/auth/register`  | `{ name, email, password, org? }`     |
+| POST   | `/api/auth/login`     | `{ email, password }`                 |
+| GET    | `/api/auth/me`        | —                                     |
 
 ### Events
-| Method | Endpoint                      | Description              |
-|--------|-------------------------------|--------------------------|
-| GET    | `/api/events`                 | List events (filterable) |
-| GET    | `/api/events/stats`           | Portfolio statistics     |
-| GET    | `/api/events/:id`             | Get event + guests       |
-| POST   | `/api/events`                 | Create event             |
-| PUT    | `/api/events/:id`             | Update event             |
-| DELETE | `/api/events/:id`             | Delete event             |
-| POST   | `/api/events/:id/agenda`      | Add agenda item          |
+| Method | Path                        | Notes                         |
+|--------|-----------------------------|-------------------------------|
+| GET    | `/api/events`               | `?status=&category=&search=`  |
+| GET    | `/api/events/stats`         | Portfolio statistics          |
+| GET    | `/api/events/:id`           | Includes populated guests     |
+| POST   | `/api/events`               | Create event                  |
+| PUT    | `/api/events/:id`           | Update any field              |
+| DELETE | `/api/events/:id`           | Permanent delete              |
+| POST   | `/api/events/:id/agenda`    | Append agenda item            |
 
 ### Guests
-| Method | Endpoint           | Description          |
-|--------|--------------------|----------------------|
-| GET    | `/api/guests`      | List guests          |
-| POST   | `/api/guests`      | Add guest            |
-| PUT    | `/api/guests/:id`  | Update guest/RSVP    |
-| DELETE | `/api/guests/:id`  | Remove guest         |
-| POST   | `/api/guests/bulk` | Bulk import guests   |
+| Method | Path                | Notes                    |
+|--------|---------------------|--------------------------|
+| GET    | `/api/guests`       | `?rsvp=&role=&search=`   |
+| POST   | `/api/guests`       | `{ ...guest, eventId? }` |
+| PUT    | `/api/guests/:id`   | Update RSVP, role, etc.  |
+| DELETE | `/api/guests/:id`   | Remove guest             |
+| POST   | `/api/guests/bulk`  | `{ guests[], eventId? }` |
 
-### AI Endpoints
-| Method | Endpoint                    | Description                        |
-|--------|-----------------------------|------------------------------------|
-| POST   | `/api/ai/chat`              | AI assistant conversation          |
-| POST   | `/api/ai/generate-event`    | Generate full event details        |
-| POST   | `/api/ai/generate-agenda`   | Generate event agenda              |
-| POST   | `/api/ai/suggest-venues`    | Suggest venues by city/category    |
-| POST   | `/api/ai/analyze`           | Analyze event portfolio            |
-
----
-
-## ✨ Key Features
-
-- **🤖 AI Event Generation** — Describe any event in plain English; AI fills in all details (venue, date, agenda, budget)
-- **📋 AI Agenda Builder** — One click generates a professional agenda for any event
-- **🏛️ Venue Suggestions** — AI recommends venues by city, category, and guest count
-- **💬 AI Chat Panel** — Persistent assistant with event context awareness
-- **📊 Analytics Dashboard** — Recharts visualizations: categories, statuses, budgets, RSVP rates
-- **📅 Calendar View** — Month-by-month event calendar with click-to-view
-- **👥 Guest Management** — Full guest directory with RSVP tracking and event assignment
-- **🔐 JWT Auth** — Secure registration/login with bcrypt password hashing
-- **🛡️ Security** — Helmet, CORS, rate limiting on all routes
+### AI
+| Method | Path                      | Body                                          |
+|--------|---------------------------|-----------------------------------------------|
+| POST   | `/api/ai/chat`            | `{ messages[], eventContext? }`               |
+| POST   | `/api/ai/generate-event`  | `{ prompt }`                                  |
+| POST   | `/api/ai/generate-agenda` | `{ eventId, duration?, focus? }`              |
+| POST   | `/api/ai/suggest-venues`  | `{ city, guests, category, budget }`          |
+| POST   | `/api/ai/analyze`         | — (reads user's events automatically)         |
 
 ---
 
-## 🗄️ MongoDB Schema Overview
+## ✨ Features
 
-**User**: name, email (unique), password (hashed), role, organization  
-**Event**: name, description, date, time, venue{}, category, status, expectedGuests, budget{}, agenda[], tags[], color  
-**Guest**: name, email (unique), phone, company, role, rsvp, events[]  
-
----
-
-## 📦 Production Build
-
-```bash
-npm run build          # builds client/dist/
-# Then serve client/dist/ with nginx or a CDN
-# Set NODE_ENV=production in server/.env
-```
+- **🤖 AI Event Generation** — Describe an event in plain English; Claude fills all details
+- **📋 AI Agenda Builder** — One click generates a professional programme for any event
+- **🏛️ Venue Suggestions** — AI recommends venues by city, category, guest count, and budget
+- **💬 Persistent AI Chat** — Context-aware assistant knows your live event data
+- **📊 Analytics Dashboard** — Recharts: category breakdown, status distribution, budget vs. spent, RSVP rates
+- **📅 Calendar View** — Month grid with click-through to event detail
+- **👥 Guest Directory** — Full RSVP management, role assignment, bulk import
+- **🔐 JWT Auth** — Secure register/login, bcrypt password hashing, protected routes
+- **🌐 Serverless** — Scales to zero, no server to manage, cold starts < 1s on Vercel
 
 ---
 
-## 🔧 Configuration Tips
-
-- Use **MongoDB Atlas** for a cloud database (replace `MONGODB_URI`)
-- Set `JWT_SECRET` to a long random string in production
-- Add your Anthropic API key to unlock all AI features
-- Rate limits: 100 req/15min globally, 20 AI req/min
-
----
-
-*Built with ✦ Evara AI — Claude claude-sonnet-4 + React + Express + MongoDB*
+*Built with ✦ Evara AI — Claude claude-sonnet-4 · React 18 · Vercel Serverless · MongoDB Atlas*

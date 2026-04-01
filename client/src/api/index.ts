@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+// Relative base — works on Vercel (rewrites /api/* to serverless fns)
+// and with `vercel dev` locally. Change to http://localhost:3000/api
+// if running the Vercel CLI on a different port.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  timeout: 30000,
+  baseURL: '/api',
+  timeout: 30_000,
 });
 
 // Attach JWT token to every request
@@ -36,32 +39,33 @@ export const authAPI = {
 
 // ── Events ────────────────────────────────────────
 export const eventsAPI = {
-  list: (params?: Record<string, string | number>) => api.get('/events', { params }),
-  stats: () => api.get('/events/stats'),
-  get: (id: string) => api.get(`/events/${id}`),
-  create: (data: Record<string, unknown>) => api.post('/events', data),
-  update: (id: string, data: Record<string, unknown>) => api.put(`/events/${id}`, data),
-  delete: (id: string) => api.delete(`/events/${id}`),
+  list:      (params?: Record<string, string | number>) => api.get('/events', { params }),
+  stats:     () => api.get('/events/stats'),
+  get:       (id: string) => api.get(`/events/${id}`),
+  create:    (data: Record<string, unknown>) => api.post('/events', data),
+  update:    (id: string, data: Record<string, unknown>) => api.put(`/events/${id}`, data),
+  delete:    (id: string) => api.delete(`/events/${id}`),
   addAgenda: (id: string, item: Record<string, unknown>) => api.post(`/events/${id}/agenda`, item),
 };
 
 // ── Guests ────────────────────────────────────────
 export const guestsAPI = {
-  list: (params?: Record<string, string>) => api.get('/guests', { params }),
+  list:   (params?: Record<string, string>) => api.get('/guests', { params }),
   create: (data: Record<string, unknown>) => api.post('/guests', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/guests/${id}`, data),
   delete: (id: string) => api.delete(`/guests/${id}`),
-  bulk: (data: { guests: Record<string, unknown>[]; eventId?: string }) => api.post('/guests/bulk', data),
+  bulk:   (data: { guests: Record<string, unknown>[]; eventId?: string }) =>
+    api.post('/guests/bulk', data),
 };
 
 // ── AI ────────────────────────────────────────────
 export const aiAPI = {
   chat: (messages: { role: string; content: string }[], eventContext?: Record<string, unknown>) =>
     api.post('/ai/chat', { messages, eventContext }),
-  generateEvent: (prompt: string) => api.post('/ai/generate-event', { prompt }),
+  generateEvent:  (prompt: string) => api.post('/ai/generate-event', { prompt }),
   generateAgenda: (eventId: string, duration?: number, focus?: string) =>
     api.post('/ai/generate-agenda', { eventId, duration, focus }),
-  suggestVenues: (data: { city: string; guests: number; category: string; budget: number }) =>
+  suggestVenues:  (data: { city: string; guests: number; category: string; budget: number }) =>
     api.post('/ai/suggest-venues', data),
   analyze: () => api.post('/ai/analyze'),
 };
